@@ -86,3 +86,80 @@ EOF
 
 	git add README.txt esp-idf-export.sh .gitignore
 	git commit -m 'esp-idf-tools'
+
+# esp-prog - motorbrainz 1.0
+
+	# cable between JTAG and PROG headers on esp-prog and motorbrainz boards
+
+		esp-prog
+
+			VJTAG jumper may be removed (not connected on motorbrainz board)
+			VPROG jumper should be 5V (BOOT and RST levels will still be 3V3 based)
+			IO_0 jumper must be on for esp-prog to affect download boot
+
+
+		motorbrainz
+
+			set power jumper get 5V from esp-prog
+			or 5V regulated from external 12V 
+
+	# esp-prog LED indicators
+
+		red	3V3 power
+		blue	RX from ESP32
+		green	TX to ESP32
+
+	# esp-prog FTDI F22232HL dual asynchronous serial interfaces
+
+		# /dev/ttyUSB0	JTAG	(first, numbered 0 if no other USB ttys)
+		# /dev/ttyUSB1	PROG	(first + 1)
+
+	# connect to PROG 115200 8N1
+	minicom -D /dev/ttyUSB1
+
+		# holding the BOOT button while pushing the RST button on esp-prog
+		# should reset the TinyPICO NANO and wait for new firmware download
+
+			rst:0x1 (POWERON_RESET),boot:0x3 (DOWNLOAD_BOOT(UART0/UART1/SDIO_REI_REO_V2))
+			waiting for download  
+
+		# pushing RST button alone on esp-prog
+		# should reset the TinyPICO NANO and load the resident firmware
+		# MicroPython based firmware from Unexpected Maker will fail ...
+
+			rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+			configsip: 188777542, SPIWP:0xee
+			clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+			mode:DIO, clock div:1
+			load:0x3fff0018,len:4
+			load:0x3fff001c,len:5244
+			load:0x40078000,len:14068
+			load:0x40080400,len:3796
+			entry 0x40080634
+			Warning: SPI(-1, ...) is deprecated, use SoftSPI(...) instead
+
+			Hello from TinyPICO!
+			--------------------
+
+			Battery Voltage is 3.7V
+			Battery Charge State is True
+
+			Memory Info - micropython.mem_info()
+			------------------------------------
+			stack: 752 out of 15360
+			GC: total: 4098240, used: 4816, free: 4093424
+			 No. of 1-blocks: 73, 2-blocks: 19, max blk sz: 25, max free sz: 255677
+			Traceback (most recent call last):
+			  File "main.py", line 82, in <module>
+			  File "main.py", line 44, in print_temp
+			AttributeError: 'module' object has no attribute 'get_internal_temp_F'
+			MicroPython v1.13-283-g203e1d2a6 on 2021-01-27; TinyPICO with ESP32-PICO-D4
+			Type "help()" for more information.
+			>>> 
+
+	# the USB to serial converter on the TinyPICO NANO
+	# collides with that on the esp-prog
+	# the CP2104 chip and its auto reset transistors must be removed
+
+	git add README.txt
+	git commit -m 'esp-prog - motorbrainz 1.0'
