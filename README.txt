@@ -268,3 +268,95 @@ EOF
 	rm -rf project/build
 	git add README.txt
 	git commit -m 'esp-idf-tools JTAG debugging'
+
+# eclipse
+
+	sudo dnf install eclipse eclipse-cdt eclipse-mpc
+
+	# get rid of old eclipse artifacts
+
+		rm -rf ~/.{eclipse,p2}
+
+# https://docs.espressif.com/projects/esp-idf/en/latest/get-started/eclipse-setup.html
+
+	echo .metadata >> .gitignore
+	git rm -r project
+
+	eclipse
+
+		#! set workspace to here
+
+		Help: Install New Software...: Add...: 
+
+			# espressif/idf-eclipse-plugin
+
+				Name:		espressif/idf-eclipse-plugin latest
+				Location:	https://dl.espressif.com/dl/idf-eclipse-plugin/updates/latest/
+
+					not compatible with eclipse 2021-03
+					use beta
+
+				Name:		espressif/idf-eclipse-plugin beta
+				Location:	https://dl.espressif.com/dl/idf-eclipse-plugin/updates/beta/
+				
+				Add
+
+				0 Espressif IDF
+					X CMake Editor
+					X Embedded C/C++ OpenOCD Debugging (incubation)
+					X Espressif IDF Plugins for Eclipse
+
+				Restart Now
+
+		File: New: Project...
+
+			Wizard: Espressif: Espressif IDF Project
+			Project name: project
+
+		Project Explorer: <project>
+
+			toolbar: Launch Target
+				Name:		esp32
+				IDF Target:	esp32
+				Serial Port:	/dev/ttyUSB1
+
+			toolbar: Build
+
+			toolbar: Open a Terminal
+				Choose terminal:	ESP-IDF Serial Monitor
+					this doesn't work
+				Choose terminal:	Serial Terminal
+
+			toolbar: Launch in 'Run' mode
+
+		<project>: Debug As: Debug Configurations...
+			ESP-IDF GDB OpenOCD Debugging
+				New Configuration: Debugger
+					OpenOCD Setup
+						Executable path:	openocd
+					GDB Client Setup
+						Actual executable:	xtensa-esp32-elf-gdb
+					Apply
+					Close
+
+		Project Explorer: <project>
+
+			toolbar: Launch Mode: Debug
+			toolbar: Launch Configuration; project Configuration
+			toolbar: Launch in 'Debug' mode
+
+				# auto change to debug perspective
+				# find code stopped at app_main entry point
+
+		exit eclipse
+
+	rm -rf project/build
+	rm project/sdkconfig*
+
+	echo build	>> project/.gitignore
+	echo sdkconfig	>> project/.gitignore
+	echo *.old	>> project/.gitignore
+	echo *.swp	>> project/.gitignore
+
+	git add README.txt .gitignore project
+	git commit -m 'idf-eclipse-plugin'
