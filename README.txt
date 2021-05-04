@@ -187,3 +187,84 @@ EOF
 
 	git add README.txt project
 	git commit -m 'idf.py create empty project, build, flash, monitor'
+
+# esp-idf-tools JTAG debugging
+
+	https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/jtag-debugging/index.html
+
+	# terminal for serial output monitor
+
+		minicom -D /dev/ttyUSB1
+		OR
+		(cd project; idf.py monitor)
+
+	# terminal for openocd
+
+		# esp-prog uses an FTDI chip like the esp32-wrover-kit
+		# ESP32-PICO-D4's integrated external SPI flash is 3.3v
+
+		openocd -f board/esp32-wrover-kit-3.3v.cfg
+		OR
+		(cd project; idf.py openocd)
+
+			Open On-Chip Debugger  v0.10.0-esp32-20200709 (2020-07-09-08:54)
+			Licensed under GNU GPL v2
+			For bug reports, read
+				http://openocd.org/doc/doxygen/bugs.html
+			Info : Configured 2 cores
+			Info : Listening on port 6666 for tcl connections
+			Info : Listening on port 4444 for telnet connections
+			Info : ftdi: if you experience problems at higher adapter clocks, try the command "ftdi_tdo_sample_edge falling"
+			Info : clock speed 20000 kHz
+			Info : JTAG tap: esp32.cpu0 tap/device found: 0x120034e5 (mfg: 0x272 (Tensilica), part: 0x2003, ver: 0x1)
+			Info : JTAG tap: esp32.cpu1 tap/device found: 0x120034e5 (mfg: 0x272 (Tensilica), part: 0x2003, ver: 0x1)
+			Info : esp32: Debug controller 0 was reset.
+			Info : esp32: Core 0 was reset.
+			Info : esp32: Debug controller 1 was reset.
+			Info : esp32: Core 1 was reset.
+			Info : Listening on port 3333 for gdb connections
+
+	# build
+
+		(cd project; idf.py build)
+
+	# terminal for gdb (project should have already been flashed)
+
+		xtensa-esp32-elf-gdb project/build/project.elf
+
+			# connect to openocd
+			target remote :3333
+
+			# reset processor and immediately halt it
+			mon reset halt
+
+			# set a temporary hardware breakpoint at app_main
+			thb app_main
+
+			# continue until breakpoint
+			c
+
+		OR
+		(cd project; idf.py gdb)
+
+			# will automatically
+			# connect to openocd
+			# reset processor and immediately halt it
+			# set a temporary hardware breakpoint at app_main
+			# continue until breakpoint
+
+		OR
+		(cd project; idf.py gdbtui)
+
+			# will do the same with the gdb terminal user interface
+
+		OR
+		(cd project; idf.py gdbgui)
+
+			# does not work.
+			# should do the same (?) with the gdb graphical user interface (browser based)
+			#	http://127.0.0.1:5000
+
+	rm -rf project/build
+	git add README.txt
+	git commit -m 'esp-idf-tools JTAG debugging'
