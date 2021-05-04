@@ -360,3 +360,23 @@ EOF
 
 	git add README.txt .gitignore project
 	git commit -m 'idf-eclipse-plugin'
+
+eclipse preferences
+
+	General: Editors: Text Editors
+		Displayed tab width:	8
+		X Show print margin
+		X Show line numbers
+		X Show whitespace characters
+
+	C/C++: Code Style: Formatter
+		Active profile:	K&R [built-in]: Edit...
+			Profile Name: K&R [built-in] sw=4 ts=8
+				Tab policy:		Mixed
+				Indentation size:	4
+				Tab size:		8
+
+	exit eclipse
+
+	git add README.txt
+	git commit -m 'eclipse preferences'
