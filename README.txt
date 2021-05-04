@@ -163,3 +163,27 @@ EOF
 
 	git add README.txt
 	git commit -m 'esp-prog - motorbrainz 1.0'
+
+# idf.py create empty project, build, flash, monitor
+
+	# create project subdirectory with CMakeLists.txt and empty main/
+
+		idf.py create-project project
+
+	# project development
+
+		(cd project
+
+			idf.py --help
+
+		# erase, flash, monitor
+
+			idf.py -p /dev/ttyUSB1 erase_flash
+			idf.py flash
+			idf.py monitor
+
+			rm -rf build
+		)
+
+	git add README.txt project
+	git commit -m 'idf.py create empty project, build, flash, monitor'
