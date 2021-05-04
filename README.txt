@@ -334,6 +334,7 @@ EOF
 				New Configuration: Debugger
 					OpenOCD Setup
 						Executable path:	openocd
+						Config options:		-f board/esp32-wrover-kit-3.3v.cfg
 					GDB Client Setup
 						Actual executable:	xtensa-esp32-elf-gdb
 					Apply
