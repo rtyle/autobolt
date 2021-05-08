@@ -302,10 +302,7 @@ EOF
 				
 				Add
 
-				0 Espressif IDF
-					X CMake Editor
-					X Embedded C/C++ OpenOCD Debugging (incubation)
-					X Espressif IDF Plugins for Eclipse
+				X Espressif IDF
 
 				Restart Now
 
