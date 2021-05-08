@@ -293,7 +293,8 @@ EOF
 				Name:		espressif/idf-eclipse-plugin latest
 				Location:	https://dl.espressif.com/dl/idf-eclipse-plugin/updates/latest/
 
-					not compatible with eclipse 2021-03
+					not compatible with Fedora 34 eclipse 2021-03
+					eclipse.org eclipse-cpp-2021-03-R-linux-gtk-x86_64.tar.gz is broken
 					use beta
 
 				Name:		espressif/idf-eclipse-plugin beta
