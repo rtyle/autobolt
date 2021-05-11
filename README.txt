@@ -273,6 +273,14 @@ EOF
 
 	sudo dnf install eclipse eclipse-cdt eclipse-mpc
 
+	# fedora 34 packaged eclipse does not work with espressif/idf-eclipse-plugin
+	# https://github.com/espressif/idf-eclipse-plugin/issues/260
+	# download from eclipse.org
+
+		echo eclipse >> .gitignore
+		curl https://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2021-03/R/eclipse-cpp-2021-03-R-linux-gtk-x86_64.tar.gz | tar xzf -
+		mv eclipse ~/eclipse-2021-03
+
 	# get rid of old eclipse artifacts
 
 		rm -rf ~/.{eclipse,p2}
@@ -282,7 +290,7 @@ EOF
 	echo .metadata >> .gitignore
 	git rm -r project
 
-	eclipse
+	(. esp-idf-export.sh; ~/eclipse-2021-03/eclipse >/dev/null 2>&1 &)
 
 		#! set workspace to here
 
@@ -293,17 +301,11 @@ EOF
 				Name:		espressif/idf-eclipse-plugin latest
 				Location:	https://dl.espressif.com/dl/idf-eclipse-plugin/updates/latest/
 
-					not compatible with Fedora 34 eclipse 2021-03
-					eclipse.org eclipse-cpp-2021-03-R-linux-gtk-x86_64.tar.gz is broken
-					use beta
-
-				Name:		espressif/idf-eclipse-plugin beta
-				Location:	https://dl.espressif.com/dl/idf-eclipse-plugin/updates/beta/
-				
 				Add
 
 				X Espressif IDF
 
+				Install anyway
 				Restart Now
 
 		File: New: Project...
