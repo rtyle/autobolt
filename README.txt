@@ -203,7 +203,7 @@ EOF
 		# esp-prog uses an FTDI chip like the esp32-wrover-kit
 		# ESP32-PICO-D4's integrated external SPI flash is 3.3v
 
-		openocd -f board/esp32-wrover-kit-3.3v.cfg
+		(cd project; openocd -f board/esp32-wrover-kit-3.3v.cfg)
 		OR
 		(cd project; idf.py openocd)
 
@@ -230,13 +230,22 @@ EOF
 
 	# terminal for gdb (project should have already been flashed)
 
-		xtensa-esp32-elf-gdb project/build/project.elf
+		(cd project; xtensa-esp32-elf-gdb build/project.elf)
 
 			# connect to openocd
 			target remote :3333
 
 			# reset processor and immediately halt it
 			mon reset halt
+
+			# flash from gdb
+			# less the "mon",
+			# these commands can be given directly to openocd as -c options)
+			mon program_esp32 build/bootloader/bootloader.bin 0x1000
+			mon program_esp32 build/partition_table/partition-table.bin 0x8000
+			# this fails
+			# why?
+			mon program_esp32 build/project.elf 0x10000
 
 			# set a temporary hardware breakpoint at app_main
 			thb app_main
@@ -329,21 +338,39 @@ EOF
 
 			toolbar: Launch in 'Run' mode
 
+		<project>: Run As: Run Configurations...
+			ESP-IDF Application
+				project
+					Common
+						Display in favorites menu
+							0 Debug
+							X Run
+					Apply
+					Close
+
 		<project>: Debug As: Debug Configurations...
 			ESP-IDF GDB OpenOCD Debugging
-				New Configuration: Debugger
-					OpenOCD Setup
-						Executable path:	openocd
-						Config options:		-f board/esp32-wrover-kit-3.3v.cfg
-					GDB Client Setup
-						Actual executable:	xtensa-esp32-elf-gdb
+				New Configuration
+					Debugger
+						OpenOCD Setup
+							Executable path:	openocd
+							Config options:		-f board/esp32-wrover-kit-3.3v.cfg
+						GDB Client Setup
+							Actual executable:	xtensa-esp32-elf-gdb
+					Startup
+						Initialization Commands
+							0 Enable ARM semihosting
+					Common
+						Display in favorites menu
+							X Debug
+							0 Run
 					Apply
 					Close
 
 		Project Explorer: <project>
 
+			toolbar: Launch Configuration; project debugger
 			toolbar: Launch Mode: Debug
-			toolbar: Launch Configuration; project Configuration
 			toolbar: Launch in 'Debug' mode
 
 				# auto change to debug perspective
@@ -381,3 +408,34 @@ eclipse preferences
 
 	git add README.txt
 	git commit -m 'eclipse preferences'
+
+configuring build type and
+flashing from command line
+	
+	# reconfigure for build type
+	idf.py reconfigure -DCMAKE_BUILD_TYPE=Release
+	idf.py reconfigure -DCMAKE_BUILD_TYPE=Debug
+
+	idf.py build
+	idf.py flash
+
+flashing from eclipse
+
+	# flash the build from the current configuration
+
+		toolbar: Launch configuration: project
+		toolbar: Launch in 'Run' mode
+		
+	# we should be able to flash on debugger startup but
+	# this depends on openocd and gdb and
+	# as they fail (above) so does this
+	# so don't bother
+	<project>: Debug As: Debug Configurations...
+		ESP-IDF GDB OpenOCD Debugging: project debugger
+			Startup
+				Load Symbols and Executable
+					X Load executable
+					Executable offset (hex): 10000
+			Apply
+			Close
+	
