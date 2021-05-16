@@ -286,7 +286,6 @@ EOF
 	# https://github.com/espressif/idf-eclipse-plugin/issues/260
 	# download from eclipse.org
 
-		echo eclipse >> .gitignore
 		curl https://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2021-03/R/eclipse-cpp-2021-03-R-linux-gtk-x86_64.tar.gz | tar xzf -
 		mv eclipse ~/eclipse-2021-03
 
