@@ -1,5 +1,5 @@
 # autobolt
-Automatically bolt (lock) your garage door when it closes.
+Automatically bolt (lock) your manually operated garage door when it closes.
 
 ## Parts
 [motorbrainz board](https://github.com/rtyle/motorbrainz)
