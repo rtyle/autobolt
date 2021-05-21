@@ -19,7 +19,7 @@ Two [magnetic reed switch](https://www.digikey.com/en/products/detail/standex-me
 This project was built on a Fedora Linux platform.
 Your mileage may vary elsewhere.
 
-Get autobolt source code with it's dependencies
+Get autobolt source code with its dependencies
 
     git clone http://github.com/rtyle/autobolt.git
     cd autobolt
