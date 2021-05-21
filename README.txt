@@ -58,7 +58,7 @@
 		IDF_PYTHON_ENV_PATH=$IDF_TOOLS_PATH/python_env/idf4.3_py3.9_env
 		OPENOCD_SCRIPTS=$IDF_TOOLS_PATH/tools/openocd-esp32/v0.10.0-esp32-20200709/openocd-esp32/share/openocd/scripts
 
-						PATH=\
+		PATH=\
 		$IDF_PATH/components/esptool_py/esptool:\
 		$IDF_PATH/components/espcoredump:\
 		$IDF_PATH/components/partition_table:\
@@ -203,6 +203,11 @@ EOF
 		# esp-prog uses an FTDI chip like the esp32-wrover-kit
 		# ESP32-PICO-D4's integrated external SPI flash is 3.3v
 
+		openocd -f board/esp32-wrover-kit-3.3v.cfg \
+			-c 'program_esp32 project/build/bootloader/bootloader.bin 0x1000' \
+			-c 'program_esp32 project/build/partition_table/partition-table.bin 0x8000' \
+			-c 'program_esp32 project/build/project.bin 0x10000'
+
 		(cd project; openocd -f board/esp32-wrover-kit-3.3v.cfg)
 		OR
 		(cd project; idf.py openocd)
@@ -240,12 +245,10 @@ EOF
 
 			# flash from gdb
 			# less the "mon",
-			# these commands can be given directly to openocd as -c options)
+			# these commands can be given directly to openocd as -c options
 			mon program_esp32 build/bootloader/bootloader.bin 0x1000
 			mon program_esp32 build/partition_table/partition-table.bin 0x8000
-			# this fails
-			# why?
-			mon program_esp32 build/project.elf 0x10000
+			mon program_esp32 build/project.bin 0x10000
 
 			# set a temporary hardware breakpoint at app_main
 			thb app_main
@@ -349,6 +352,7 @@ EOF
 
 		<project>: Debug As: Debug Configurations...
 			ESP-IDF GDB OpenOCD Debugging
+				Name:	project debugger
 				New Configuration
 					Debugger
 						OpenOCD Setup
@@ -427,14 +431,13 @@ flashing from eclipse
 		
 	# we should be able to flash on debugger startup but
 	# this depends on openocd and gdb and
-	# as they fail (above) so does this
-	# so don't bother
 	<project>: Debug As: Debug Configurations...
 		ESP-IDF GDB OpenOCD Debugging: project debugger
 			Startup
 				Load Symbols and Executable
 					X Load executable
-					Executable offset (hex): 10000
+					X Use file:			${workspace_loc:/project/build/project.bin}
+					Executable offset (hex):	10000
 			Apply
 			Close
 	

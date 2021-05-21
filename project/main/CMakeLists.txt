@@ -3,7 +3,15 @@ set(COMPONENT_REQUIRES )
 set(COMPONENT_PRIV_REQUIRES )
 
 set(COMPONENT_SRCS
-	"main.cpp"
+	ADC.cpp
+	AsioTask.cpp
+	LEDC.cpp
+	main.cpp
+	Pin.cpp
+	Qio.cpp
+	Switch.cpp
+	Task.cpp
+	Timer.cpp
 )
 set(COMPONENT_ADD_INCLUDEDIRS "")
 
