@@ -14,6 +14,10 @@ Two [magnetic reed switch](https://www.digikey.com/en/products/detail/standex-me
 
 [2.1mm x 5.5mm barrel jack](https://www.digikey.com/en/products/detail/tensility-international-corp/54-00063/6206244)
 
+[3mm LEDs](https://www.amazon.com/gp/product/B077XFLX13)
+
+[3mm LED holders](https://www.amazon.com/gp/product/B07D9HCNDX)
+
 ## Software Build, Deploy and Monitor
 
 This project was built on a Fedora Linux platform.
@@ -57,17 +61,20 @@ Monitor serial output from device.
 
 ## Installation
 
-Pull motorbrainz control inputs 0 and 1 high (+3V3) with 10k resistors and bridge their other sides to ground.
+Pull motorbrainz control inputs 1 and 2 high (+3V3) with 10k resistors and bridge their other sides to ground.
 A closed reed switch across an input pair will take the input from high to low.
 These inputs will be controlled by the door (0) and bolt (1) reed switches.
 Harvest one 2x5 connector with a pigtail from the cable assembly.
 From the right, connect the door and bolt reed switches across the first two wire pairs.
 
+From the left, connect the bolt and door LEDs (with series current limiting resistors) across the first two wire pairs (observing polarity).
+Mount LEDs to case using LED holders.
+
 Open the 841LM case and slide the motorbrainz board into the corner below/behind the motor.
 Secure and insulate, as necessary, with kapton tape.
 Install the power jack and wire it to the +12V motorbrainz input.
-Wire either motorbrainz output (or both in parallel) to the motor.
-TODO: describe polarity.
+Wire either motorbrainz output (or both in parallel, with same polarity) to the motor.
+The green motor wire goes to the terminal with the circular pad; the yellow to the square pad.
 Reed switches will be installed outside the case.
 Make a way to route their wires to the motorbrainz control connector.
 
