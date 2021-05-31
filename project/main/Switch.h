@@ -3,39 +3,27 @@
 #include "Pin.h"
 #include "Timer.h"
 
-/// A Switch is an ObservablePin::Observer that, together with a timer,
-/// manages a finite state machine to debounce the pin and generate
-/// toggled events.
-/// A switch is constructed in the idle state
-/// (on or off, depending on how the pin level compares with the onLevel).
-/// Pin activity in the idle state generates a toggled event (off or on)
-/// and causes the Switch to enter the bounce state.
-/// After debounceDuration, another toggled event will be generated if
-/// the pin level warrants it and the Switch will enter the idle state.
+/// A Switch is an ObservablePin::Observer that
+/// reports stabilized (debounced) values.
+/// After construction and each level change, the current value is noted
+/// and then periodically sampled until its value stabilizes
+/// (resampleCount + 1 consecutive periodic samples have the same value).
+/// When a stable value is reached, stabilized is called with it.
 class Switch : private ObservablePin::Observer {
 private:
-    enum State {
-	idle,
-	bounce,
-    };
-    int const			onLevel;
-    unsigned const		debounceDuration;
-    std::function<void(bool)> const	toggled;
-    bool			on;
-    std::recursive_mutex	mutex;
-    Timer			timer;
-    int64_t			stateTime;
-    State			state;
+    unsigned const			sampleCount;
+    std::function<void(bool)> const	stabilized;
+    bool				value;
+    unsigned				resample;
+    std::recursive_mutex		mutex;
+    Timer				timer;
     void update(bool timeout);
 public:
-    /// Construct a Debounce ObservablePin::Observer.
-    /// Durations are expressed in microseconds.
-    /// These are thresholds that are examined on tick granularity.
     Switch(
 	ObservablePin &			observablePin,
-	int				onLevel,
-	unsigned			debounceDuration,
-	std::function<void(bool)>	toggled);
+	TickType_t			period,
+	unsigned			resampleCount,
+	std::function<void(bool)>	stablized);
 
     /// Define an explicit move constructor
     /// because one will not be defined implicitly
@@ -43,6 +31,4 @@ public:
     /// A move constructor is needed to support initialization of a
     /// Switch class array class element.
     Switch(Switch const && move);
-
-    bool isOn() const;
 };

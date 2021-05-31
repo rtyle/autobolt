@@ -41,25 +41,34 @@ private:
 	ADC1_CHANNEL_6,		// SENB (GPIO_NUM_34)
     };
 
-    static constexpr unsigned bounceDuration	{25000};
+    static constexpr TickType_t switchPeriod{1};
+    static constexpr unsigned	switchResampleCount{8};
+
+    static constexpr TickType_t	timerStartPeriod{4000 / portTICK_PERIOD_MS};
+    static constexpr TickType_t timerStopPeriod	{1000 / portTICK_PERIOD_MS};
 
     static constexpr ledc_timer_bit_t dutyResolutionLog2{LEDC_TIMER_8_BIT};
     static constexpr unsigned dutyResolution {1 << dutyResolutionLog2};
 
     asio::io_context::work	busy;
 
+    LEDC::Timer			pwmTimer;
+    LEDC::Channel		boltOpenLed;
+    LEDC::Channel		doorOpenLed;
+    LEDC::Channel		enablePwm[bridgeCount];
+
     ObservablePin::ISR		pinISR;		// install GPIO ISR service
     ObservablePin::Task		pinTask;	// buffer/relay to ObservablePin
     ObservablePin		boltPin;
     ObservablePin		doorPin;
-    bool			boltClosed;
-    bool			doorClosed;
-    int64_t			doorClosedTime;
-    Switch			boltClosedSwitch;
-    Switch			doorClosedSwitch;
-    Timer			doorClosedTimer;
-    LEDC::Timer			pwmTimer;
-    LEDC::Channel		enablePwm[bridgeCount];
+
+    bool			boltOpen;
+    bool			doorOpen;
+    Switch			boltOpenSwitch;
+    Switch			doorOpenSwitch;
+    Timer			timer;
+    TickType_t			timerCount;
+
     Pin				inPin[bridgeCount][2];
     ADC::Unit1			adcUnit;
     ADC::Unit1::Channel		adcChannel[bridgeCount];
@@ -71,29 +80,9 @@ private:
 	pwm.update_duty();
     }
 
-    void boltClose(
-	bool		start,
-	int64_t		afterStart,
-	uint32_t const	voltage[bridgeCount])
-    {
-	ESP_LOGI(name, "boltClose %s %lld %u %u",
-	    start ? "start" : "stop", afterStart, voltage[0], voltage[1]);
-	if (start) {
-	    for (auto & ps: inPin) {
-		bool l = 1;
-		for (auto & p: ps) {
-		    p.set_level(l);
-		    l ^= 1;
-		}
-	    }
-	    for (auto & pwm: enablePwm) {
-		setDuty(pwm, 1.0f);
-	    }
-	} else {
-	    doorClosedTimer.stop();
-	    for (auto & pwm: enablePwm) {
-		setDuty(pwm, 0.0f);
-	    }
+    void setDutyEnablePwm(float fraction) {
+	for (auto & pwm: enablePwm) {
+	    setDuty(pwm, fraction);
 	}
     }
 
@@ -102,53 +91,75 @@ public:
     :
 	AsioTask	{},
 	busy		{io},
-	pinISR		{},
-	pinTask		{"pinTask", 5, 4096, tskNO_AFFINITY, 128},
-	boltPin		{control[1], GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE,
-			    GPIO_PULLDOWN_DISABLE, GPIO_INTR_ANYEDGE, pinTask},
-	doorPin		{control[0], GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE,
-			    GPIO_PULLDOWN_DISABLE, GPIO_INTR_ANYEDGE, pinTask},
-	boltClosed	{},
-	doorClosed	{},
-	doorClosedTime	{0},
-	boltClosedSwitch{boltPin, 0, bounceDuration,
-	    [this](bool on){io.post([this, on](){
-		boltClosed = on;
-		ESP_LOGI(name, "bolt %s", boltClosed ? "closed" : "open");
-	    });}},
-	doorClosedSwitch{doorPin, 0, bounceDuration,
-	    [this](bool on){io.post([this, on](){
-		doorClosed = on;
-		ESP_LOGI(name, "door %s", doorClosed ? "closed" : "open");
-		if (doorClosed) {
-		    doorClosedTime = esp_timer_get_time();
-		    if (!boltClosed) {
-			doorClosedTimer.start();
-		    }
-		}
-	    });}},
-	doorClosedTimer{"doorClosedTimer", 1, true,
-	    [this](){
-		constexpr int64_t start	{1000000};
-		constexpr int64_t stop	{1000000};
-		int64_t afterStart{esp_timer_get_time() - start - doorClosedTime};
-		uint32_t const voltage[bridgeCount]{
-		    adcChannel[0].getVoltage(),
-		    adcChannel[1].getVoltage(),
-		};
-		if (boltClosed) {
-		    boltClose(false, afterStart, voltage);
-		} else {
-		    if (0 <= afterStart) {
-			boltClose(afterStart < stop, afterStart, voltage);
-		    }
-		}
-	    }},
+
 	pwmTimer{LEDC_HIGH_SPEED_MODE, dutyResolutionLog2},
+	boltOpenLed{pwmTimer, control[4], 0},
+	doorOpenLed{pwmTimer, control[3], 0},
 	enablePwm{
 	    {pwmTimer, enable[0] , 0},
 	    {pwmTimer, enable[1] , 0},
 	},
+
+	pinISR		{},
+	pinTask		{"pinTask", 5, 4096, tskNO_AFFINITY, 256},
+	boltPin		{control[1], GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE,
+			    GPIO_PULLDOWN_DISABLE, GPIO_INTR_ANYEDGE, pinTask},
+	doorPin		{control[0], GPIO_MODE_INPUT, GPIO_PULLUP_DISABLE,
+			    GPIO_PULLDOWN_DISABLE, GPIO_INTR_ANYEDGE, pinTask},
+
+	boltOpen	{false},
+	doorOpen	{false},
+	boltOpenSwitch{boltPin, switchPeriod, switchResampleCount,
+	    [this](bool on){io.post([this, on](){
+		if (timer.isActive()) timer.stop();
+		setDutyEnablePwm(0.0f);
+		if ((boltOpen = on)) {
+		    ESP_LOGI(name, "bolt opened");
+		    setDuty(boltOpenLed, 1.0f);
+		} else {
+		    ESP_LOGI(name, "bolt closed");
+		    setDuty(boltOpenLed, 0.0f);
+		}
+	    });}},
+	doorOpenSwitch{doorPin, switchPeriod, switchResampleCount,
+	    [this](bool on){io.post([this, on](){
+		if (timer.isActive()) timer.stop();
+		setDutyEnablePwm(0.0f);
+		if ((doorOpen = on)) {
+		    ESP_LOGI(name, "door opened");
+		    setDuty(doorOpenLed, 1.0f);
+		} else {
+		    ESP_LOGI(name, "door closed");
+		    setDuty(doorOpenLed, 0.0f);
+		    if (boltOpen) {
+			timer.setPeriod(timerStartPeriod);	// and start
+		    }
+		}
+	    });}},
+	timer{"timer", 1, true,
+	    [this](){
+		if (!doorOpen && boltOpen) {	// else ignore timer (leak)
+		    if (timerStartPeriod == timer.getPeriod()) {
+			    setDutyEnablePwm(1.0f);
+			    ESP_LOGI(name, "bolt start");
+			    timerCount = timerStopPeriod;
+			    timer.setPeriod(1);			// and start
+		    } else {
+			uint32_t const v[bridgeCount]{
+			    adcChannel[0].getVoltage(),
+			    adcChannel[1].getVoltage(),
+			};
+			if (--timerCount) {
+			    ESP_LOGI(name, "bolt closing %u %u", v[0], v[1]);
+			} else {
+			    timer.stop();
+			    setDutyEnablePwm(0.0f);
+			    ESP_LOGE(name, "bolt stop %u %u", v[0], v[1]);
+			}
+		    }
+		}
+	    }},
+
 	inPin{
 	    {
 		{in[0][0], GPIO_MODE_OUTPUT},
@@ -165,6 +176,14 @@ public:
 	    {adcUnit, sense[1]},
 	}
     {
+	// set polarity once and enable later as needed
+	for (auto & pair: inPin) {
+	    bool level = 1;
+	    for (auto & pin: pair) {
+		pin.set_level(level);
+		level ^= 1;
+	    }
+	}
 	pinTask.start();
 	run();
     }
