@@ -1,1 +1,1 @@
-export IDF_TOOLS_PATH=/home/ross/autobolt/esp-idf-tools; . esp-idf/export.sh
+export IDF_TOOLS_PATH=$PWD/esp-idf-tools; . esp-idf/export.sh
