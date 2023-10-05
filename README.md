@@ -45,7 +45,8 @@ Grant user access to USB serial devices then **relogin** to get access.
 
     sudo usermod -a -G dialout $USER
 
-Identify serial port and baud rate to connected device.
+Connect to the USB port on the motorbrainz board and
+identify its serial port and baud rate.
 For example,
 
     port=/dev/ttyUSB0
