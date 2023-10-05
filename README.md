@@ -45,19 +45,20 @@ Grant user access to USB serial devices then **relogin** to get access.
 
     sudo usermod -a -G dialout $USER
 
-Identify serial port to connected device.
+Identify serial port and baud rate to connected device.
 For example,
 
     port=/dev/ttyUSB0
+    baud=115200
 
 Prepare connected device and deploy application.
 
-    (cd project; idf.py -p $port erase_flash)
-    (cd project; idf.py -p $port flash)
+    (cd project; idf.py -b $baud -p $port erase_flash)
+    (cd project; idf.py -b $baud -p $port flash)
 
 Monitor serial output from device.
 
-    (cd project; idf.py -p $port monitor)
+    (cd project; idf.py -b $baud -p $port monitor)
 
 ## Installation
 
