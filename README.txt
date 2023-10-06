@@ -21,7 +21,7 @@
 	# toolchain prerequisites
 	# https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/linux-setup.html
 
-		sudo dnf install git wget flex bison gperf python3 python3-pip python3-setuptools cmake ninja-build ccache dfu-util libusbx
+		sudo dnf install git wget flex bison gperf python3 cmake ninja-build ccache dfu-util libusbx
 
 	# esp-idf
 	# https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html#get-started-get-esp-idf
@@ -34,12 +34,12 @@
 			(
 				cd esp-idf
 				git fetch
-				git checkout v4.3-beta3
+				git checkout v4.4.6
 				git submodule update --init --recursive
 			)
 
 	git add README.txt esp-idf
-	git commit -m 'esp-idf v4.3-beta3'
+	git commit -m 'esp-idf v4.4.6'
 
 # esp-idf-tools
 
@@ -88,6 +88,10 @@ EOF
 	git commit -m 'esp-idf-tools'
 
 # esp-prog - motorbrainz 1.0
+
+	# the USB to serial converter on the TinyPICO NANO
+	# collides with that on the esp-prog
+	# the CP2104 chip and its auto reset transistors must be removed
 
 	# cable between JTAG and PROG headers on esp-prog and motorbrainz boards
 
@@ -157,12 +161,18 @@ EOF
 			Type "help()" for more information.
 			>>> 
 
-	# the USB to serial converter on the TinyPICO NANO
-	# collides with that on the esp-prog
-	# the CP2104 chip and its auto reset transistors must be removed
-
 	git add README.txt
 	git commit -m 'esp-prog - motorbrainz 1.0'
+
+# esp-prog - motorbrainz 2.0
+
+	# the USB to serial converter on the TinyPICO NANO
+	# (CP2104 chip and its auto reset transistors)
+	# collided with similar functionality on the esp-prog board.
+	# the PROG header on the motorbrainz 1.0 board was replaced
+	# with a micro USB jack to resolve this.
+	# power and programming use this USB interface.
+	# the esp-prog/motorbrainz JTAG interfaces can be used for debugging.
 
 # idf.py create empty project, build, flash, monitor
 

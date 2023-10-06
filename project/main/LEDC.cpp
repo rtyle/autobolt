@@ -134,6 +134,9 @@ Channel::Channel(
 	timer.timer_num,
 	duty,
 	hpoint,
+	{
+		0,	// output_invert
+	},
     };
     ESP_ERROR_CHECK(ledc_channel_config(&config));
     ESP_LOGI("LEDC::Channel", "gpio_num %d, speed_mode %d, channel %d, "
